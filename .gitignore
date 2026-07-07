@@ -1,0 +1,45 @@
+# ============================================================
+# ThunderChat — .gitignore
+# ============================================================
+
+# ── Secrets & credentials (WAJIB tidak di-commit) ───────────────────────────
+.streamlit/secrets.toml
+.env
+*.env.*
+*.key
+
+# ── Python cache ─────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+.pytest_cache/
+.mypy_cache/
+
+# ── Virtual environment ───────────────────────────────────────────────────────
+venv/
+.venv/
+env/
+ENV/
+.conda/
+
+# ── Logs (internal, tidak untuk repo) ────────────────────────────────────────
+logs/
+*.log
+
+# ── OS & editor ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ── Dataset (sensitif / terlalu besar untuk repo) ────────────────────────────
+# Uncomment baris di bawah jika dataset tidak boleh masuk repo:
+# data/dataset.csv
+
+# ── Build artifacts ───────────────────────────────────────────────────────────
+dist/
+build/
+*.egg-info/

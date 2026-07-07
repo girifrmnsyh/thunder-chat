@@ -1,0 +1,10 @@
+[theme]
+# ThunderChat — Streamlit Theme Configuration
+# Sesuai style guide PRD Section 10
+
+base = "light"
+backgroundColor = "#F6F8FA"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#0D1117"
+primaryColor = "#2563EB"
+font = "sans serif"
