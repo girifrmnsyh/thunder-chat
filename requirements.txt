@@ -1,0 +1,27 @@
+# ============================================================
+# ThunderChat — requirements.txt
+# Untuk deployment ke Streamlit Community Cloud.
+# Versi tidak dikunci ketat (sesuai NFR Section 8 PRD)
+# agar kompatibel saat redeploy di masa depan.
+# ============================================================
+
+# --- Framework ---
+streamlit>=1.35
+
+# --- Gemini API (SDK resmi terbaru — bukan google-generativeai yang deprecated) ---
+google-genai>=1.0
+
+# --- Data Processing ---
+pandas>=2.0
+numpy>=1.26
+scikit-learn>=1.4
+
+# --- UI Components ---
+streamlit-shadcn-ui>=0.3
+
+# --- Loading Animation (Lottie) ---
+streamlit-lottie>=0.0.5
+requests>=2.31          # diperlukan oleh streamlit-lottie untuk load URL
+
+# --- Utilities ---
+python-dotenv>=1.0       # untuk load .env saat development lokal (opsional, fallback)
