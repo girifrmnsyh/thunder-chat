@@ -143,12 +143,12 @@ Mengacu pada mockup desain yang sudah dibuat:
 | Elemen | Nilai |
 |---|---|
 | Font | Inter |
-| Background | `#F6F8FA` |
-| Input Prompt | `#FFFFFF` |
-| Primary Text | `#0D1117` |
-| Secondary Text & Border Input | `#737373` |
+| Background | `#0D1117` |
+| Input Prompt | `#545454` |
+| Primary Text | `#f6f8fa` |
+| Secondary Text | `#b4b4b4` |
 | Primary Accent (judul, logo, elemen utama) | `#2563EB` |
-| Shadow | Tipis, minimalis |
+| Shadow (pada input prompt)| Tipis, minimalis |
 | Styling | Custom CSS dengan referensi shadcn/ui, dibantu library `streamlit-shadcn-ui` |
 
 ## 11. Tech Stack
