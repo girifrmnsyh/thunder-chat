@@ -38,8 +38,10 @@ def render_top_bar() -> None:
         <div class="tc-top-bar">
             <div class="tc-top-bar-logo">
                 {logo_svg}
-                <span class="tc-team-name">GebangThunder</span>
-                <span class="tc-team-number">(2026017)</span>
+                <div class="tc-team-text">
+                    <span class="tc-team-name">Gebang Thunder</span>
+                    <span class="tc-team-number">SSDC2026017</span>
+                </div>
             </div>
         </div>
         """,

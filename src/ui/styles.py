@@ -45,13 +45,21 @@ def inject_custom_css() -> None:
     box-sizing: border-box;
 }}
 
-html, body, [data-testid="stAppViewContainer"] {{
+html, body, [data-testid="stAppViewContainer"], .stApp, [data-testid="stMainBlockContainer"] {{
     background-color: #0D1117 !important;
     color: #f6f8fa !important;
 }}
 
 [data-testid="stMain"] {{
     background-color: #0D1117 !important;
+}}
+
+/* Fix bottom container white background */
+[data-testid="stBottom"],
+[data-testid="stBottomBlock"],
+[data-testid="stBottom"] > div {{
+    background-color: transparent !important;
+    background: transparent !important;
 }}
 
 /* Sembunyikan elemen bawaan Streamlit yang tidak diperlukan */
@@ -65,16 +73,22 @@ html, body, [data-testid="stAppViewContainer"] {{
     left: 0;
     width: 100%;
     display: flex;
+    justify-content: center;
     align-items: center;
     padding: 1.2rem 2rem;
     background-color: rgba(13, 17, 23, 0.95);
     z-index: 999;
-    border-bottom: 1px solid #1f2937;
 }}
 .tc-top-bar-logo {{
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.8rem;
+}}
+.tc-team-text {{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.2;
 }}
 .tc-team-name {{
     color: #f6f8fa;
@@ -83,7 +97,7 @@ html, body, [data-testid="stAppViewContainer"] {{
 }}
 .tc-team-number {{
     color: #b4b4b4;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     font-weight: 400;
 }}
 
