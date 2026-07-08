@@ -4,9 +4,8 @@ gemini_client.py — Wrapper Gemini API: rotasi key + error handling
 Menggunakan SDK resmi `google-genai` (bukan google-generativeai yang deprecated).
 Import: from google import genai
 
-Strategi rotasi: round-robin per eksekusi.
+Strategi rotasi: round-robin per eksekusi, dengan retry ke key lain jika gagal.
 Index rotasi disimpan di st.session_state["key_index"].
-Tidak ada retry otomatis ke key lain — langsung fallback saat error (FR6).
 """
 
 import streamlit as st
@@ -35,6 +34,7 @@ Jangan mengarang angka atau fakta yang tidak ada dalam data.
 def ask_gemini(question: str, grounding_context: str, config: dict) -> str:
     """
     Kirim pertanyaan ke Gemini API dengan grounding context.
+    Jika satu key gagal, otomatis retry ke key berikutnya (round-robin).
 
     Parameters
     ----------
@@ -48,45 +48,80 @@ def ask_gemini(question: str, grounding_context: str, config: dict) -> str:
     Returns
     -------
     str
-        Jawaban naratif dari model, atau fallback message jika error.
+        Jawaban naratif dari model, atau fallback message jika semua key gagal.
     """
     api_keys: list[str] = config.get("api_keys", [])
     model_name: str = config.get("model_name", "gemini-3.5-flash")
 
     if not api_keys:
+        msg = (
+            "❌ **Konfigurasi Error**: Tidak ada Gemini API key yang terdeteksi. "
+            "Pastikan Streamlit Secrets sudah dikonfigurasi dengan benar "
+            "dalam format `[gemini] key_1 = \"...\"` dst."
+        )
         logger.error("Tidak ada API key tersedia.")
+        st.error(msg)
         return FALLBACK_API_ERROR
-
-    # ── Round-robin: ambil key berdasarkan index sesi ─────────────────────────
-    key_index: int = st.session_state.get("key_index", 0)
-    current_key = api_keys[key_index % len(api_keys)]
-
-    # Advance index untuk request berikutnya
-    st.session_state["key_index"] = (key_index + 1) % len(api_keys)
-
-    logger.info(f"Using API key index {key_index} | model={model_name}")
 
     # ── Susun full prompt ─────────────────────────────────────────────────────
     full_prompt = f"{grounding_context}\n\n---\n\nPertanyaan: {question}"
 
-    # ── Panggil Gemini API ────────────────────────────────────────────────────
-    try:
-        client = genai.Client(api_key=current_key)
+    # ── Round-robin start index ───────────────────────────────────────────────
+    start_index: int = st.session_state.get("key_index", 0)
+    num_keys = len(api_keys)
 
-        response = client.models.generate_content(
-            model=model_name,
-            contents=full_prompt,
-            config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_INSTRUCTION,
-                temperature=0.2,        # rendah untuk jawaban faktual/deterministik
-                max_output_tokens=1024,
-            ),
-        )
+    last_error: Exception | None = None
 
-        answer = response.text
-        logger.info("Gemini response received successfully.")
-        return answer
+    # ── Retry loop: coba semua key, mulai dari start_index ───────────────────
+    for attempt in range(num_keys):
+        key_index = (start_index + attempt) % num_keys
+        current_key = api_keys[key_index]
 
-    except Exception as e:
-        logger.error(f"Gemini API error (key_index={key_index}): {type(e).__name__}: {e}")
-        return FALLBACK_API_ERROR
+        logger.info(f"Trying API key index {key_index} (attempt {attempt + 1}/{num_keys}) | model={model_name}")
+
+        try:
+            client = genai.Client(api_key=current_key)
+
+            response = client.models.generate_content(
+                model=model_name,
+                contents=full_prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=SYSTEM_INSTRUCTION,
+                    temperature=0.2,        # rendah untuk jawaban faktual/deterministik
+                    max_output_tokens=1024,
+                ),
+            )
+
+            answer = response.text
+            logger.info(f"Gemini response received successfully via key_index={key_index}.")
+
+            # Advance index untuk request berikutnya (setelah key yang berhasil)
+            st.session_state["key_index"] = (key_index + 1) % num_keys
+            return answer
+
+        except Exception as e:
+            last_error = e
+            error_type = type(e).__name__
+            error_msg = str(e)
+            logger.error(
+                f"Gemini API error on key_index={key_index} "
+                f"(attempt {attempt + 1}/{num_keys}): {error_type}: {error_msg}"
+            )
+
+            # Tampilkan detail error di UI untuk membantu debugging
+            # (dapat dinonaktifkan setelah API berfungsi normal)
+            st.warning(
+                f"⚠️ **[DEBUG] Key #{key_index + 1} gagal** — "
+                f"`{error_type}`: {error_msg}"
+            )
+
+            # Lanjut ke key berikutnya
+            continue
+
+    # ── Semua key gagal ───────────────────────────────────────────────────────
+    logger.error(f"Semua {num_keys} API key gagal. Last error: {last_error}")
+    st.error(
+        f"❌ **Semua {num_keys} API key gagal digunakan.** "
+        f"Periksa log di atas untuk detail error masing-masing key."
+    )
+    return FALLBACK_API_ERROR
