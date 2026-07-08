@@ -21,6 +21,8 @@ FALLBACK_API_ERROR = (
     "Silakan coba lagi dalam beberapa saat."
 )
 
+# ── System instructions ────────────────────────────────────────────────────
+# Digunakan saat grounding aktif (dataset tersedia)
 SYSTEM_INSTRUCTION = """
 Kamu adalah ThunderChat, asisten analitik untuk dashboard Gebang Thunder.
 Tugasmu HANYA menjawab pertanyaan yang berkaitan dengan data yang disediakan dalam konteks ini.
@@ -28,6 +30,13 @@ Jawab dalam Bahasa Indonesia dengan narasi yang jelas dan ringkas.
 Jangan membuat grafik, tabel, atau visualisasi — hanya teks naratif.
 Jika pertanyaan di luar cakupan data yang tersedia, tolak dengan sopan dan arahkan user untuk bertanya seputar data tersebut.
 Jangan mengarang angka atau fakta yang tidak ada dalam data.
+""".strip()
+
+# Digunakan saat grounding DINONAKTIFKAN (mode testing — tanpa dataset)
+SYSTEM_INSTRUCTION_TESTING = """
+Kamu adalah ThunderChat, asisten AI dari tim Gebang Thunder.
+Kamu sedang berjalan dalam mode testing (dataset belum tersedia).
+Jawab pertanyaan pengguna secara umum dan membantu, dalam Bahasa Indonesia.
 """.strip()
 
 
@@ -63,8 +72,15 @@ def ask_gemini(question: str, grounding_context: str, config: dict) -> str:
         st.error(msg)
         return FALLBACK_API_ERROR
 
-    # ── Susun full prompt ─────────────────────────────────────────────────────
-    full_prompt = f"{grounding_context}\n\n---\n\nPertanyaan: {question}"
+    # ── Pilih system instruction berdasarkan ada/tidaknya grounding context ─────
+    if grounding_context.strip():
+        active_instruction = SYSTEM_INSTRUCTION
+        full_prompt = f"{grounding_context}\n\n---\n\nPertanyaan: {question}"
+        logger.info("Mode: grounding aktif.")
+    else:
+        active_instruction = SYSTEM_INSTRUCTION_TESTING
+        full_prompt = question
+        logger.info("Mode: testing (tanpa grounding context).")
 
     # ── Round-robin start index ───────────────────────────────────────────────
     start_index: int = st.session_state.get("key_index", 0)
@@ -86,8 +102,8 @@ def ask_gemini(question: str, grounding_context: str, config: dict) -> str:
                 model=model_name,
                 contents=full_prompt,
                 config=types.GenerateContentConfig(
-                    system_instruction=SYSTEM_INSTRUCTION,
-                    temperature=0.2,        # rendah untuk jawaban faktual/deterministik
+                    system_instruction=active_instruction,
+                    temperature=0.2,
                     max_output_tokens=1024,
                 ),
             )

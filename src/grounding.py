@@ -10,6 +10,12 @@ from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+# ── FLAG: Aktifkan/nonaktifkan grounding data ─────────────────────────────────
+# Set ke False saat dataset belum tersedia (mode testing — chatbot menjawab
+# sebagai model Gemini biasa tanpa konteks data).
+# Set ke True ketika dataset sudah siap untuk mengaktifkan kembali grounding.
+GROUNDING_ENABLED: bool = False
+
 DOMAIN_HEADER = """
 Kamu memiliki akses ke data berikut dari dashboard Gebang Thunder.
 Gunakan data ini sebagai SATU-SATUNYA sumber kebenaran untuk menjawab pertanyaan.
@@ -32,7 +38,13 @@ def build_grounding_context(df: pd.DataFrame | None, agg_context: str) -> str:
     -------
     str
         String context yang siap disertakan dalam prompt Gemini.
+        String kosong jika GROUNDING_ENABLED = False (mode testing).
     """
+    # ── Mode testing: grounding dinonaktifkan sementara ───────────────────────
+    if not GROUNDING_ENABLED:
+        logger.info("Grounding dinonaktifkan (GROUNDING_ENABLED=False). Mode testing aktif.")
+        return ""
+
     if df is None:
         logger.warning("Dataset tidak tersedia — grounding context minimal.")
         return f"{DOMAIN_HEADER}\n\n{agg_context}"
