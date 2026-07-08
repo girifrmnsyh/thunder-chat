@@ -18,6 +18,7 @@ from src.ui.components import (
     render_chat_bubble,
     render_bot_answer,
     render_input_bar,
+    render_top_bar,
 )
 from src.utils.logger import get_logger
 
@@ -52,12 +53,15 @@ if not st.session_state.app_loaded:
     st.session_state.app_loaded = True
 
 # ── Render UI ─────────────────────────────────────────────────────────────────
+render_top_bar()
+
 if not st.session_state.messages:
     # Landing / empty state
     render_landing_hero()
-    selected_prompt = render_suggested_prompts()
-    if selected_prompt:
-        st.session_state.pending_prompt = selected_prompt
+    # selected_prompt = render_suggested_prompts()
+    # if selected_prompt:
+    #     st.session_state.pending_prompt = selected_prompt
+    selected_prompt = None
 else:
     # Tampilkan riwayat percakapan sesi ini
     for msg in st.session_state.messages:

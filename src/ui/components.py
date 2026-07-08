@@ -5,6 +5,8 @@ Semua fungsi render UI: hero, suggested prompts, chat bubble, bot answer, input 
 Menggunakan HTML custom via st.markdown + custom CSS dari styles.py.
 """
 
+import base64
+from pathlib import Path
 import streamlit as st
 from src.utils.logger import get_logger
 
@@ -22,15 +24,41 @@ DEFAULT_SUGGESTED_PROMPTS = [
 ]
 
 
+def render_top_bar() -> None:
+    """Render top bar (freeze) dengan logo dan nama tim."""
+    logo_svg = ""
+    base_dir = Path(__file__).parent.parent.parent
+    logo_path = base_dir / "assets" / "icons" / "logo-gt.svg"
+    if logo_path.exists():
+        with open(logo_path, "r", encoding="utf-8") as f:
+            logo_svg = f.read()
+    
+    st.markdown(
+        f"""
+        <div class="tc-top-bar">
+            <div class="tc-top-bar-logo">
+                {logo_svg}
+                <span class="tc-team-name">GebangThunder</span>
+                <span class="tc-team-number">(2026017)</span>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
 def render_landing_hero() -> None:
     """Render hero section untuk landing/empty state."""
+    base_dir = Path(__file__).parent.parent.parent
+    highlight_path = base_dir / "assets" / "icons" / "highlight-teks.svg"
+    img_b64 = ""
+    if highlight_path.exists():
+        with open(highlight_path, "rb") as f:
+            img_b64 = base64.b64encode(f.read()).decode("utf-8")
+
     st.markdown(
-        """
-        <div class="tc-hero">
-            <div class="tc-hero-logo">⚡ ThunderChat</div>
-            <div class="tc-hero-tagline">
-                Tanyakan apa saja tentang data Gebang Thunder
-            </div>
+        f"""
+        <div class="tc-hero-highlight">
+            <img src="data:image/svg+xml;base64,{img_b64}" alt="Highlight Teks" />
         </div>
         """,
         unsafe_allow_html=True,
@@ -101,57 +129,9 @@ def render_bot_answer(text: str) -> None:
 
 def render_input_bar() -> str | None:
     """
-    Render sticky input bar di bagian bawah.
-    Submit bisa lewat tombol Enter (on_change) atau klik ikon send.
-
-    Returns
-    -------
-    str | None
-        Teks yang disubmit, atau None jika kosong.
+    Render sticky input bar di bagian bawah menggunakan st.chat_input.
     """
-    with st.container():
-        st.markdown('<div class="tc-input-wrapper">', unsafe_allow_html=True)
-        col_input, col_btn = st.columns([10, 1])
-
-        with col_input:
-            user_text = st.text_input(
-                label="input",
-                placeholder="Apa yang ingin kamu tahu?",
-                label_visibility="collapsed",
-                key="user_input_field",
-            )
-
-        with col_btn:
-            submit_clicked = st.button("→", key="submit_btn", use_container_width=True)
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    # Clear input setelah submit
-    if (submit_clicked or _enter_pressed()) and user_text and user_text.strip():
-        result = user_text.strip()
-        # Reset input field
-        st.session_state["user_input_field"] = ""
-        return result
-
-    return None
-
-
-def _enter_pressed() -> bool:
-    """
-    Deteksi apakah user menekan Enter pada input field.
-    Streamlit mengeksekusi ulang script saat input berubah —
-    kita gunakan session state untuk membedakan submit vs. mengetik biasa.
-    """
-    # Streamlit re-runs on every input change; Enter submit tidak bisa dibedakan
-    # secara native — tombol submit (→) adalah mekanisme utama selain on_submit form.
-    # Untuk UX Enter, gunakan st.form sebagai alternatif (dapat direfactor nanti).
-    return False  # Placeholder — lihat TODO di bawah
-
-
-# TODO: Refactor render_input_bar menggunakan st.form agar Enter natively bekerja:
-# with st.form("chat_form", clear_on_submit=True):
-#     user_text = st.text_input(...)
-#     submitted = st.form_submit_button("Kirim")
+    return st.chat_input("Apa yang ingin kamu tahu?")
 
 
 def _escape_html(text: str) -> str:
